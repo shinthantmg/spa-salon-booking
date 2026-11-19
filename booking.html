@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Book an Appointment · Lotus Spa Bangkok</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="site-header" id="site-header"></header>
+
+  <main>
+    <section class="band sage" style="padding-bottom:32px">
+      <div class="wrap">
+        <h1>Book an appointment</h1>
+        <p class="lead">Choose a treatment, pick a free time, and tell us who's coming. It takes about a minute.</p>
+      </div>
+    </section>
+
+    <section class="band" style="padding-top:32px">
+      <div class="wrap booking">
+
+        <!-- Left: the booking form -->
+        <form class="panel" id="booking-form" novalidate>
+          <fieldset>
+            <p class="step-title"><span>1</span>Treatment</p>
+            <label for="service">Treatment <span class="req">*</span>
+              <select id="service" name="service"></select>
+            </label>
+            <p class="error" id="err-service"></p>
+          </fieldset>
+
+          <fieldset>
+            <p class="step-title"><span>2</span>Date and time</p>
+            <label for="date">Date <span class="req">*</span>
+              <input type="date" id="date" name="date">
+            </label>
+            <p class="error" id="err-date"></p>
+            <div class="slots" id="slots" role="group" aria-label="Available times"></div>
+            <p class="hint" id="slot-hint"></p>
+            <p class="error" id="err-time"></p>
+          </fieldset>
+
+          <fieldset>
+            <p class="step-title"><span>3</span>Your details</p>
+            <div class="stack">
+              <div class="row-2">
+                <div>
+                  <label for="name">Full name <span class="req">*</span>
+                    <input id="name" name="name" autocomplete="name">
+                  </label>
+                  <p class="error" id="err-name"></p>
+                </div>
+                <div>
+                  <label for="phone">Phone <span class="req">*</span>
+                    <input id="phone" name="phone" type="tel" autocomplete="tel" placeholder="081-234-5678">
+                  </label>
+                  <p class="error" id="err-phone"></p>
+                </div>
+              </div>
+              <div>
+                <label for="email">Email (optional)
+                  <input id="email" name="email" type="email" autocomplete="email">
+                </label>
+                <p class="error" id="err-email"></p>
+              </div>
+              <label for="notes">Anything we should know? (optional)
+                <textarea id="notes" name="notes" placeholder="For example: pressure preference, injuries, or if you're pregnant"></textarea>
+              </label>
+            </div>
+          </fieldset>
+
+          <button class="btn coral" type="submit" style="width:100%">Confirm booking</button>
+        </form>
+
+        <!-- Right: live summary + the customer's bookings -->
+        <aside class="stack">
+          <div class="panel summary">
+            <h2 style="font-size:28px">Your booking</h2>
+            <dl>
+              <dt>Treatment</dt><dd id="sum-service">Not chosen</dd>
+              <dt>Length</dt><dd id="sum-length">-</dd>
+              <dt>Date</dt><dd id="sum-date">-</dd>
+              <dt>Time</dt><dd id="sum-time">-</dd>
+            </dl>
+            <div class="total"><span>Total</span><b id="sum-total">฿0</b></div>
+            <p class="hint">Pay at the salon by cash, card or PromptPay. Free cancellation online.</p>
+          </div>
+
+          <div class="panel">
+            <h2 style="font-size:28px">My upcoming bookings</h2>
+            <ul class="my-bookings" id="my-bookings"></ul>
+            <p class="hint">Bookings are saved on this device.</p>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <!-- Pop-up shown after a booking is made -->
+  <div class="dialog" id="dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+    <div class="dialog-box">
+      <div class="tick"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#1f4d3f" stroke-width="3"><path d="M5 12l5 5 9-10"/></svg></div>
+      <h2 id="confirm-title" style="font-size:30px">You're booked!</h2>
+      <p id="confirm-text"></p>
+      <button class="btn" type="button" id="close-dialog">Done</button>
+    </div>
+  </div>
+
+  <footer class="site-footer" id="site-footer"></footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/booking.js"></script>
+</body>
+</html>

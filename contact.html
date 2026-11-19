@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contact · Lotus Spa Bangkok</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="site-header" id="site-header"></header>
+
+  <main>
+    <section class="band sage">
+      <div class="wrap">
+        <h1>Visit or contact us</h1>
+        <p class="lead">We're a three-minute walk from BTS Phrom Phong, exit 2. Walk-ins are welcome, but booking ahead guarantees your time.</p>
+      </div>
+    </section>
+
+    <section class="band">
+      <div class="wrap contact">
+        <div>
+          <ul class="info-list" id="info-list"></ul>
+          <h2 style="font-size:28px">Opening hours</h2>
+          <table class="hours">
+            <tbody>
+              <tr><td>Monday to Friday</td><td>10:00 to 21:00</td></tr>
+              <tr><td>Saturday and Sunday</td><td>10:00 to 21:00</td></tr>
+              <tr><td>Public holidays</td><td>11:00 to 20:00</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <form class="panel stack" id="contact-form" novalidate>
+          <h2 style="font-size:28px;margin:0">Send us a message</h2>
+          <label for="c-name">Name <span class="req">*</span><input id="c-name" autocomplete="name"></label>
+          <label for="c-email">Email <span class="req">*</span><input id="c-email" type="email" autocomplete="email"></label>
+          <label for="c-msg">Message <span class="req">*</span><textarea id="c-msg"></textarea></label>
+          <button class="btn" type="submit">Send message</button>
+          <p class="error" id="c-result" role="status"></p>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer" id="site-footer"></footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    // Contact details come from data.js so they are only written once
+    document.getElementById("info-list").innerHTML = `
+      <li><b>Address</b>${SALON.address}</li>
+      <li><b>Phone</b>${SALON.phone}</li>
+      <li><b>Email</b><a href="mailto:${SALON.email}">${SALON.email}</a></li>`;
+
+    // The contact form checks the fields. It doesn't send anything yet:
+    // a service like Formspree or a small back-end can be added later.
+    document.getElementById("contact-form").addEventListener("submit", e => {
+      e.preventDefault();
+      const name = document.getElementById("c-name").value.trim();
+      const email = document.getElementById("c-email").value.trim();
+      const msg = document.getElementById("c-msg").value.trim();
+      const out = document.getElementById("c-result");
+      if (!name || !msg || !/^\S+@\S+\.\S+$/.test(email)) {
+        out.style.color = "#b3261e";
+        out.textContent = "Please fill in your name, a valid email and a message.";
+        return;
+      }
+      out.style.color = "#1f4d3f";
+      out.textContent = `Thank you, ${name}. This is a demo form, so please call or email us for now.`;
+      e.target.reset();
+    });
+  </script>
+</body>
+</html>
