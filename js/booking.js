@@ -22,6 +22,34 @@ const toTime = mins => `${pad(Math.floor(mins / 60))}:${pad(mins % 60)}`;
 const isoDate = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const findService = id => SERVICES.find(s => s.id === id);
 
+// Turn text typed by a customer into safe HTML, so "<b>" shows as text (BUG-003)
+const escapeHtml = text => String(text).replace(/[&<>"']/g, c =>
+  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+// Bookings can be made from today up to 60 days ahead (BUG-001, BUG-002)
+const BOOKING_DAYS_AHEAD = 60;
+function bookingWindow() {
+  const first = new Date();
+  const last = new Date();
+  last.setDate(last.getDate() + BOOKING_DAYS_AHEAD);
+  return { first: isoDate(first), last: isoDate(last) };
+}
+const isBookableDate = date => {
+  const { first, last } = bookingWindow();
+  return date >= first && date <= last;
+};
+
+// A random booking code like "LS7K2QXM" that no other booking uses (BUG-005)
+function newBookingCode() {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O or 1/I, which are easy to mix up
+  let code;
+  do {
+    const random = crypto.getRandomValues(new Uint32Array(6));
+    code = "LS" + Array.from(random, n => chars[n % chars.length]).join("");
+  } while (bookings.some(b => b.code === code));
+  return code;
+}
+
 function niceDate(iso) {
   const d = new Date(iso + "T00:00:00");
   return d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
@@ -67,7 +95,7 @@ function freeSlots(date, minutes) {
     const end = start + minutes;
     const overlapping = taken.filter(t => t.start < end && start < t.end).length;
     const past = isToday && start <= nowMins;
-    slots.push({ time: toTime(start), free: !past && overlapping < THERAPISTS });
+    slots.push({ time: toTime(start), past, free: !past && overlapping < THERAPISTS });
   }
   return slots;
 }
@@ -91,9 +119,9 @@ function fillServiceSelect() {
 
 function setUpDate() {
   const today = new Date();
-  const max = new Date(); max.setDate(max.getDate() + 60);
-  $("date").min = isoDate(today);
-  $("date").max = isoDate(max);
+  const { first, last } = bookingWindow();
+  $("date").min = first;
+  $("date").max = last;
 
   // If the salon is already closed today, start with tomorrow
   if (today.getHours() >= SALON.closeHour - 1) today.setDate(today.getDate() + 1);
@@ -109,6 +137,15 @@ function drawSlots() {
     $("slot-hint").textContent = "Choose a treatment and date to see free times.";
     return;
   }
+  // Typed dates can skip the date picker's limits, so check them here too (BUG-001, BUG-002)
+  if (!isBookableDate(state.date)) {
+    state.time = "";
+    box.innerHTML = "";
+    const { last } = bookingWindow();
+    $("slot-hint").textContent = `Please choose a date from today up to ${niceDate(last)}.`;
+    return;
+  }
+
   const slots = freeSlots(state.date, s.min);
   // If the chosen time is no longer free, clear it
   if (!slots.some(x => x.time === state.time && x.free)) state.time = "";
@@ -118,9 +155,12 @@ function drawSlots() {
   ).join("");
 
   const count = slots.filter(x => x.free).length;
+  const tooLateToday = state.date === isoDate(new Date()) && slots.every(x => x.past);
   $("slot-hint").textContent = count
     ? `${count} times free. Crossed-out times are fully booked.`
-    : "Sorry, this day is fully booked. Please try another date.";
+    : tooLateToday
+      ? "No more times today. Please choose another date." // BUG-004
+      : "Sorry, this day is fully booked. Please try another date.";
 }
 
 function drawSummary() {
@@ -143,6 +183,7 @@ function check() {
 
   if (!state.service) errors.service = "Please choose a treatment.";
   if (!state.date) errors.date = "Please choose a date.";
+  else if (!isBookableDate(state.date)) errors.date = "Please choose a date from today up to 60 days ahead.";
   if (!state.time) errors.time = "Please choose a time.";
   if (name.length < 2) errors.name = "Please enter your name.";
   if (!/^(\+66|0)\d{8,9}$/.test(phone)) errors.phone = "Please enter a Thai phone number, e.g. 081-234-5678.";
@@ -169,9 +210,9 @@ function drawMyBookings() {
     <li>
       <div>
         <div class="when">${niceDate(b.date)} at ${b.time}</div>
-        <div class="what">${b.serviceName} · ${b.min} min · ${baht(b.price)} · Code ${b.code}</div>
+        <div class="what">${escapeHtml(b.serviceName)} · ${b.min} min · ${baht(b.price)} · Code ${escapeHtml(b.code)}</div>
       </div>
-      <button type="button" class="btn outline small" data-cancel="${b.code}">Cancel</button>
+      <button type="button" class="btn outline small" data-cancel="${escapeHtml(b.code)}">Cancel</button>
     </li>`).join("");
 }
 
@@ -206,7 +247,7 @@ form.addEventListener("submit", e => {
 
   const s = findService(state.service);
   const booking = {
-    code: "LS" + Date.now().toString(36).toUpperCase().slice(-6),
+    code: newBookingCode(),
     serviceId: s.id, serviceName: s.name, min: s.min, price: s.price,
     date: state.date, time: state.time,
     name: $("name").value.trim(),
@@ -219,7 +260,7 @@ form.addEventListener("submit", e => {
   saveBookings(bookings);
 
   $("confirm-text").innerHTML =
-    `${booking.name}, your <b>${s.name}</b> is booked for <b>${niceDate(booking.date)} at ${booking.time}</b>.<br>
+    `${escapeHtml(booking.name)}, your <b>${escapeHtml(s.name)}</b> is booked for <b>${niceDate(booking.date)} at ${booking.time}</b>.<br>
      Your booking code is <span class="code">${booking.code}</span>.`;
   $("dialog").classList.add("open");
   $("close-dialog").focus();
